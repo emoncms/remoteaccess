@@ -414,7 +414,7 @@ var MQTT = (function(Store, Session, Settings, Endpoints, Logger, RefreshRate, U
             Logger.debug('Taken', timer.timeTaken() + 'ms','for partner mqtt (sub.py) client to respond with', response.request.action);
             var result = response.result;
             if(result.success === false) {
-                Logger.error('Error:', result.message, 'Original Request:', response.request);
+                Logger.debug('Error:', result.message, 'Original Request:', response.request);
                 // stop the auto reload of data
                 interruptPublishInterval();
                 Store.setStatus('error');
