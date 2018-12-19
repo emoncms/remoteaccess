@@ -135,7 +135,8 @@ var STORE = {
         selectedFeeds: [],
         view: 'list',
         status: 'ready',
-        error: ''
+        error: '',
+        errorTitle: ''
     },
     // edit the shared store's state with internal functions...
     toggleCollapsed: function(tag, state) {
@@ -262,6 +263,10 @@ var STORE = {
         } else {
             LOGGER.verbose('STORE: setStatus() did not change status. Was already set to', status);
         }
+    },
+    setErrorTitle: function(msg) {
+        this.state.errorTitle = msg;
+        LOGGER.verbose('STORE: setErrorTitle() triggered with', msg);
     },
     setError: function(msg) {
         this.setStatus('error');
@@ -406,26 +411,39 @@ var MQTT = (function(Store, Session, Settings, Endpoints, Logger, RefreshRate, U
             timer.stop(); // stop the timeout counter
             var response = JSON.parse(message.toString()); // decode stream
             Logger.info('MQTT: received message for: ', response.request.action);
-            Logger.debug('Taken', timer.timeTaken() + 'ms','for partner mqtt (sub.py) client to respond with', response.request.action)
+            Logger.debug('Taken', timer.timeTaken() + 'ms','for partner mqtt (sub.py) client to respond with', response.request.action);
             var result = response.result;
-            switch(response.request.action) {
-                case Endpoints.feedlist:
-                    Logger.debug('STORE: setNodes()');
-                    Store.setFeeds(result);
-                    break;
-                case Endpoints.graph:
-                    GRAPH.plot(response);
-                    break;
-                case Endpoints.saveFeed:
-                    Logger.info('@todo: respond to feed->set Endpoints call');
-                    Logger.debug('API: feed->set()');
-                    break;
-                case Endpoints.deleteFeed:
-                    Logger.info('@todo: respond to feed->delete Endpoints call');
-                    Logger.debug('API: feed->delete()');
-                    break;
-                default:
-                    Logger.debug('MQTT: cannot respond to unrecognized action ', response.request.action);
+            if(result.success === false) {
+                Logger.error('Error:', result.message, 'Original Request:', response.request);
+                // stop the auto reload of data
+                interruptPublishInterval();
+                Store.setStatus('error');
+                Store.setErrorTitle('API Error');
+                Store.setError('"' + response.request.action + '" failed. Please update your EmonCMS install to handle the required API requests.');
+                // put the graph view back to the list view
+                if(Store.state.view === 'graph') {
+                    // Store.setView('list');
+                }
+            } else {
+                switch(response.request.action) {
+                    case Endpoints.feedlist:
+                        Logger.debug('STORE: setNodes()');
+                        Store.setFeeds(result);
+                        break;
+                    case Endpoints.graph:
+                        GRAPH.plot(response);
+                        break;
+                    case Endpoints.saveFeed:
+                        Logger.info('@todo: respond to feed->set Endpoints call');
+                        Logger.debug('API: feed->set()');
+                        break;
+                    case Endpoints.deleteFeed:
+                        Logger.info('@todo: respond to feed->delete Endpoints call');
+                        Logger.debug('API: feed->delete()');
+                        break;
+                    default:
+                        Logger.debug('MQTT: cannot respond to unrecognized action ', response.request.action);
+                }
             }
         });
     }
@@ -589,6 +607,9 @@ var GRAPH = (function (Store, Endpoints, Mqtt, Logger){
 
         // loop through results
         var data = [];
+        if(response.result == "Feed does not exist") {
+            // api doesn't support
+        }
         for (index in response.result) {
             // plot the data points
             var result = response.result[index];

@@ -81,9 +81,11 @@
         <transition name="fade">
         <h2 class="animate" v-if="false && shared.selectedFeedNames !== ''">Graph: {{ shared.selectedFeedNames }} </h2>
         </transition>
-        <h4 v-if="shared.status === 'error'"> {{ shared.error }} </h4>
-
-        <div style="opacity:.8;z-index:2" class="p-2 font-weight-bold position-absolute bg-light"
+        <div v-if="shared.status === 'error'" class="alert alert-warning">
+            <h4 class="alert-heading"> {{ shared.errorTitle }} </h4>
+            {{ shared.error }}
+        </div>
+        <div id="tooltip" style="opacity:.8;z-index:2" class="p-2 font-weight-bold position-absolute bg-light"
             :style="{top: local.tooltip.top, left: local.tooltip.left, display: local.tooltip.show ? 'block': 'none'}" 
         >
             {{local.tooltip.contents}}

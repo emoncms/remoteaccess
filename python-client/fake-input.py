@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 # load settings from .env file
 _dir = path.dirname(path.dirname(path.abspath(__file__)))
 
-if path.isfile(path.join(_dir, 'remoteaccess.env')) :
-    dotenv_path = path.join(_dir, 'remoteaccess.env')
+if path.isfile(path.join(_dir, 'remoteaccess.env.dev')) :
+    dotenv_path = path.join(_dir, 'remoteaccess.env.dev')
 else:
     print('remoteaccess.env not found')
     sys.exit(0)
@@ -38,7 +38,7 @@ while True:
     # random integer between 1 and 100
     value = random.randint(1,101)
     # add url parameters to url
-    url = "%s?node=emontx&json={power1:%s}&apikey=%s" % (base_url, value, apikey)
+    url = "%s?node=emontx&json={power2:%s}&apikey=%s" % (base_url, value, apikey)
     # request http response
     response = get_data(url)
     # output response from http request
